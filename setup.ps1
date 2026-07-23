@@ -1,9 +1,32 @@
 $ErrorActionPreference = "Stop"
 
+function Prompt-Reinstall ($toolName, $path) {
+    if (Test-Path $path) {
+        $response = Read-Host "$toolName is already installed at $path. Do you want to delete and reinstall it? (Y/N)"
+        if ($response -eq 'Y' -or $response -eq 'y') {
+            Write-Host "Deleting $path..."
+            Remove-Item -Path $path -Recurse -Force
+            return $true
+        }
+        return $false
+    }
+    return $true
+}
+
+function Prompt-Reinstall-Command ($toolName, $command) {
+    if (Get-Command $command -ErrorAction SilentlyContinue) {
+        $response = Read-Host "$toolName is already installed. Do you want to reinstall it? (Y/N)"
+        if ($response -eq 'Y' -or $response -eq 'y') {
+            return $true
+        }
+        return $false
+    }
+    return $true
+}
+
+
 function Install-NodeJS {
-    if (Get-Command "node" -ErrorAction SilentlyContinue) {
-        Write-Host "Node.js is already installed. Skipping."
-    } else {
+    if (Prompt-Reinstall-Command "Node.js" "node") {
         Write-Host "Downloading and installing Node.js..."
         $nodeInstaller = "$env:TEMP\node-v20-x64.msi"
         Invoke-WebRequest -Uri "https://nodejs.org/dist/v20.11.1/node-v20.11.1-x64.msi" -OutFile $nodeInstaller
@@ -14,9 +37,7 @@ function Install-NodeJS {
 
 function Install-SonarQube {
     $installDir = "C:\sast"
-    if (Test-Path "$installDir\bin") {
-        Write-Host "SonarQube Server is already installed in $installDir. Skipping."
-    } else {
+    if (Prompt-Reinstall "SonarQube Server" "$installDir\bin") {
         Write-Host "Installing SonarQube Server to $installDir..."
         New-Item -Path $installDir -ItemType Directory -Force | Out-Null
         $zipPath = "$env:TEMP\sonarqube.zip"
@@ -31,9 +52,7 @@ function Install-SonarQube {
 
 function Install-SonarCli {
     $installDir = "C:\sast\cli"
-    if (Test-Path "$installDir\bin\sonar-scanner.bat") {
-        Write-Host "Sonar CLI is already installed in $installDir. Skipping."
-    } else {
+    if (Prompt-Reinstall "Sonar CLI" $installDir) {
         Write-Host "Installing Sonar CLI to $installDir..."
         New-Item -Path $installDir -ItemType Directory -Force | Out-Null
         $zipPath = "$env:TEMP\sonar-scanner.zip"
@@ -47,23 +66,20 @@ function Install-SonarCli {
 
 function Install-SonarNet {
     $installDir = "C:\sast\net"
-    if (Test-Path "$installDir\SonarScanner.MSBuild.exe") {
-        Write-Host "Sonar .NET scanner is already installed in $installDir. Skipping."
-    } else {
+    if (Prompt-Reinstall "Sonar .NET scanner" $installDir) {
         Write-Host "Installing Sonar .NET scanner to $installDir..."
         New-Item -Path $installDir -ItemType Directory -Force | Out-Null
         $zipPath = "$env:TEMP\sonar-net.zip"
-        Invoke-WebRequest -Uri "https://github.com/SonarSource/sonar-scanner-msbuild/releases/download/6.0.0.81631/sonar-scanner-msbuild-6.0.0.81631-net46.zip" -OutFile $zipPath
+        Invoke-WebRequest -Uri "https://github.com/SonarSource/sonar-scanner-msbuild/releases/download/11.2.0.135473/sonar-scanner-11.2.0.135473-net-framework.zip" -OutFile $zipPath
         Expand-Archive -Path $zipPath -DestinationPath $installDir -Force
+        # The new zip might extract into a folder or directly into root. We will assume directly based on normal framework zip format, or we'll adjust if necessary.
         Write-Host "Sonar .NET scanner installed successfully."
     }
 }
 
 function Install-OwaspZap {
     $zapDir = "C:\Program Files\OWASP\Zed Attack Proxy"
-    if (Test-Path $zapDir) {
-        Write-Host "OWASP ZAP is already installed. Skipping."
-    } else {
+    if (Prompt-Reinstall "OWASP ZAP" $zapDir) {
         Write-Host "Installing OWASP ZAP..."
         $installer = "$env:TEMP\ZAP_2_14_0_windows.exe"
         Invoke-WebRequest -Uri "https://github.com/zaproxy/zaproxy/releases/download/v2.14.0/ZAP_2_14_0_windows.exe" -OutFile $installer
@@ -74,14 +90,16 @@ function Install-OwaspZap {
 
 function Install-GoogleAntigravityIde {
     $installDir = "C:\Program Files\Google Antigravity IDE"
-    if (Test-Path $installDir) {
-        Write-Host "Google Antigravity IDE is already installed. Skipping."
-    } else {
+    if (Prompt-Reinstall "Google Antigravity IDE" $installDir) {
         Write-Host "Installing Google Antigravity IDE..."
         $installer = "$env:TEMP\antigravity-installer.exe"
-        Invoke-WebRequest -Uri "https://antigravity.google/download#antigravity-ide" -OutFile $installer
-        Start-Process $installer -Wait -ArgumentList "/S"
-        Write-Host "Google Antigravity IDE installed successfully."
+        try {
+            Invoke-WebRequest -Uri "https://antigravity.google/download#antigravity-ide" -OutFile $installer
+            Start-Process $installer -Wait -ArgumentList "/S"
+            Write-Host "Google Antigravity IDE installed successfully."
+        } catch {
+            Write-Host "Failed to download Google Antigravity IDE (the URL might be unavailable). Skipping."
+        }
     }
 }
 

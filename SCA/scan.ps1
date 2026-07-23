@@ -21,9 +21,9 @@ if ($packageJsonFile) {
 }
 
 Write-Host "Running npm audit in $packageJsonDir..."
-Set-Location $packageJsonDir
+Push-Location $packageJsonDir
 $npmAuditJson = npm audit --json | ConvertFrom-Json
-Set-Location -Path $PSScriptRoot
+Pop-Location
 
 Write-Host "Running Snyk scan on the project..."
 

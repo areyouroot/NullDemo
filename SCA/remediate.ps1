@@ -41,9 +41,9 @@ if ($packageJsonFile) {
     $json | ConvertTo-Json -Depth 10 | Set-Content $packageJsonPath
 
     Write-Host "Running npm install to update lockfile..."
-    Set-Location $packageJsonDir
+    Push-Location $packageJsonDir
     npm install
-    Set-Location -Path $PSScriptRoot
+    Pop-Location
 }
 
 

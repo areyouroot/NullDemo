@@ -51,7 +51,7 @@ if (Prompt-Reinstall "SonarScanner .NET" $sonarScannerDir) {
     $zipPath = "$env:TEMP\sonar-net.zip"
     # We download the global tool package or the zip. Using the global tool via dotnet is preferred,
     # but we'll use the zip for standalone as requested.
-    Invoke-WebRequest -Uri "https://github.com/SonarSource/sonar-scanner-msbuild/releases/download/6.0.0.81631/sonar-scanner-msbuild-6.0.0.81631-net46.zip" -OutFile $zipPath
+    Invoke-WebRequest -Uri "https://github.com/SonarSource/sonar-scanner-msbuild/releases/download/11.2.0.135473/sonar-scanner-11.2.0.135473-net-framework.zip" -OutFile $zipPath
     Expand-Archive -Path $zipPath -DestinationPath $sonarScannerDir -Force
 }
 $env:Path = "$sonarScannerDir;" + $env:Path

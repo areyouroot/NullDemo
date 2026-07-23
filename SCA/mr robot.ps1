@@ -47,9 +47,9 @@ if ($packageJsonPath -and (Test-Path $packageJsonPath)) {
 
     Write-Host "Running npm install to update lockfile..."
     $packageJsonDir = Split-Path $packageJsonPath
-    Set-Location $packageJsonDir
+    Push-Location $packageJsonDir
     npm install --package-lock-only
-    Set-Location -Path $PSScriptRoot
+    Pop-Location
 
 } else {
     Write-Host "Could not find package.json to inject vulnerable npm packages."
